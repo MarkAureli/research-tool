@@ -6,18 +6,20 @@ Inspired by [tobiasosborne/ProjSeminorm](https://github.com/tobiasosborne/ProjSe
 
 ## Usage
 
-```bash
-research
+```
+research new           scaffold a new project (interactive)
+research list          list all managed projects (with full paths)
+research delete NAME   delete a project (local directory + GitHub repo)
 ```
 
-Prompts for:
-- Project name (required)
+`research new` prompts for:
+- Project name (required, must be unique)
 - Parent directory (default: `~/Research`, created if absent)
 - Research question (default: placeholder)
-- GitHub visibility: private / public (default: private)
+- GitHub visibility: private / public / local (default: private)
 
 Then creates the full project skeleton, makes an initial git commit, and
-pushes a new GitHub repo.
+pushes a new GitHub repo (unless visibility is `local`).
 
 ## Setup (one-time)
 
