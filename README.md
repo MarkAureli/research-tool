@@ -16,8 +16,8 @@ Prompts for:
 - Research question (default: placeholder)
 - GitHub visibility: private / public (default: private)
 
-Then creates the full project skeleton, makes an initial git commit, pushes a
-new GitHub repo, and fetches the Mathlib cache.
+Then creates the full project skeleton, makes an initial git commit, and
+pushes a new GitHub repo.
 
 ## Setup (one-time)
 
