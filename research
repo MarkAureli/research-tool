@@ -317,7 +317,7 @@ def main() -> None:
     print("=== research: new Lean 4 + Mathlib project ===\n")
 
     name = prompt("Project name")
-    parent_str = prompt("Parent directory", default="~/Code")
+    parent_str = prompt("Parent directory", default="~/Research")
     question = prompt(
         "Research question",
         default="<!-- TODO: state the central mathematical question here -->",
@@ -326,6 +326,7 @@ def main() -> None:
     visibility = "public" if vis_input.startswith("pu") else "private"
 
     parent = Path(parent_str).expanduser().resolve()
+    parent.mkdir(parents=True, exist_ok=True)
     project_dir = parent / name
 
     if project_dir.exists():
@@ -405,15 +406,15 @@ def main() -> None:
             )
 
     # -----------------------------------------------------------------------
+    # Mathlib cache (one-time per machine; safe to re-run)
+    # -----------------------------------------------------------------------
+    print("\nFetching Mathlib cache …")
+    run(["lake", "exe", "cache", "get"], cwd=project_dir)
+
+    # -----------------------------------------------------------------------
     # Done
     # -----------------------------------------------------------------------
-    print(f"""
-Done!  Project created at:
-  {project_dir}
-
-Next step — fetch the Mathlib cache:
-  cd {project_dir} && lake exe cache get
-""")
+    print(f"\nDone!  Project created at:\n  {project_dir}\n")
 
 
 if __name__ == "__main__":

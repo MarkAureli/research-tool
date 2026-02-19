@@ -2,6 +2,8 @@
 
 CLI tool to scaffold new Lean 4 + Mathlib research projects.
 
+Inspired by [tobiasosborne/ProjSeminorm](https://github.com/tobiasosborne/ProjSeminorm).
+
 ## Usage
 
 ```bash
@@ -10,30 +12,24 @@ research
 
 Prompts for:
 - Project name (required)
-- Parent directory (default: `~/Code`)
+- Parent directory (default: `~/Research`, created if absent)
 - Research question (default: placeholder)
 - GitHub visibility: private / public (default: private)
 
-Then creates the full project skeleton, makes an initial git commit, and
-pushes a new GitHub repo.
-
-After the project is created, fetch the Mathlib cache:
-
-```bash
-cd ~/Code/<project-name> && lake exe cache get
-```
+Then creates the full project skeleton, makes an initial git commit, pushes a
+new GitHub repo, and fetches the Mathlib cache.
 
 ## Setup (one-time)
 
 ```bash
-# Clone the repo
-git clone https://github.com/lennartbinkowski/research-tool ~/Code/research-tool
+# Clone the repo (choose any location you like)
+git clone https://github.com/MarkAureli/research-tool
 
 # Make the script executable
-chmod +x ~/Code/research-tool/research
+chmod +x research-tool/research
 
 # Add to PATH via symlink
-ln -s ~/Code/research-tool/research ~/.local/bin/research
+ln -s "$(pwd)/research-tool/research" ~/.local/bin/research
 ```
 
 Make sure `~/.local/bin` is on your `PATH` (add to `~/.zshrc` if needed):
@@ -45,7 +41,7 @@ export PATH="$HOME/.local/bin:$PATH"
 ## Updating
 
 ```bash
-cd ~/Code/research-tool && git pull
+cd /path/to/research-tool && git pull
 ```
 
 ## Project skeleton
@@ -63,3 +59,8 @@ Each new project contains:
 | `CLAUDE.md` | Build command + project notes |
 | `HANDOFF.md` | Mathematical context + session log |
 | `AGENTS.md` | Agent instructions |
+
+## Acknowledgements
+
+Project structure inspired by
+[tobiasosborne/ProjSeminorm](https://github.com/tobiasosborne/ProjSeminorm).
