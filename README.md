@@ -7,9 +7,11 @@ Inspired by [tobiasosborne/ProjSeminorm](https://github.com/tobiasosborne/ProjSe
 ## Usage
 
 ```
-research new           scaffold a new project (interactive)
-research list          list all managed projects (with full paths)
-research delete NAME   delete a project (local directory + GitHub repo)
+research new                  scaffold a new project (interactive)
+research list                 list all managed projects (with full paths)
+research delete NAME          delete a project (local directory + GitHub repo)
+research completion           print shell completion script
+research completion install   add completion to ~/.zshrc
 ```
 
 `research new` prompts for:
@@ -40,6 +42,13 @@ Make sure `~/.local/bin` is on your `PATH` (add to `~/.zshrc` if needed):
 export PATH="$HOME/.local/bin:$PATH"
 ```
 
+Then enable shell completion (zsh):
+
+```bash
+research completion install
+source ~/.zshrc
+```
+
 ## Updating
 
 ```bash
@@ -57,7 +66,7 @@ Each new project contains:
 | `lake-manifest.json` | Lockfile |
 | `.gitignore` | Ignores `.lake/` and `references/` |
 | `<Name>.lean` | Root import |
-| `<Name>/Basic.lean` | Stub with `import Mathlib` |
+| `<Name>/Basic.lean` | Initial stub |
 | `CLAUDE.md` | Build command + project notes |
 | `HANDOFF.md` | Mathematical context + session log |
 | `AGENTS.md` | Agent instructions |

@@ -2,9 +2,10 @@
 """research — manage Lean 4 + Mathlib research projects.
 
 Usage:
-  research new           scaffold a new project (interactive)
-  research list          list all managed projects
-  research delete NAME   delete a project (local + GitHub)
+  research new              scaffold a new project (interactive)
+  research list             list all managed projects
+  research delete NAME      delete a project (local + GitHub)
+  research completion       print shell completion script
 """
 
 import json
@@ -627,15 +628,50 @@ def cmd_delete(name: str) -> None:
     print("Done.")
 
 
+COMPLETION_SCRIPT = dedent("""\
+    # research shell completion
+    _research_complete() {
+        local -a subcmds projects
+        subcmds=(new list delete completion)
+        if [[ $CURRENT -eq 2 ]]; then
+            compadd -a subcmds
+        elif [[ $CURRENT -eq 3 && $words[2] == delete ]]; then
+            projects=($(research list 2>/dev/null | awk '{print $1}'))
+            compadd -a projects
+        fi
+    }
+    compdef _research_complete research
+""")
+
+COMPLETION_EVAL_LINE = 'eval "$(research completion)"'
+
+
+def cmd_completion(install: bool = False) -> None:
+    if not install:
+        print(COMPLETION_SCRIPT)
+        return
+
+    zshrc = Path("~/.zshrc").expanduser()
+    if zshrc.exists() and COMPLETION_EVAL_LINE in zshrc.read_text():
+        print("Shell completion already configured in ~/.zshrc.")
+        return
+    with zshrc.open("a") as f:
+        f.write(f"\n{COMPLETION_EVAL_LINE}\n")
+    print("Shell completion added to ~/.zshrc.")
+    print("Reload your shell or run:  source ~/.zshrc")
+
+
 # ---------------------------------------------------------------------------
 # Entry point
 # ---------------------------------------------------------------------------
 
 USAGE = """\
 Usage:
-  research new           scaffold a new project (interactive)
-  research list          list all managed projects
-  research delete NAME   delete a project (local + GitHub)
+  research new                  scaffold a new project (interactive)
+  research list                 list all managed projects
+  research delete NAME          delete a project (local + GitHub)
+  research completion           print shell completion script
+  research completion install   add completion to ~/.zshrc
 """
 
 
@@ -657,6 +693,8 @@ def main() -> None:
             print("Usage: research delete NAME", file=sys.stderr)
             sys.exit(1)
         cmd_delete(args[1])
+    elif cmd == "completion":
+        cmd_completion(install=len(args) > 1 and args[1] == "install")
     else:
         print(f"Unknown command: {cmd!r}\n{USAGE}", file=sys.stderr)
         sys.exit(1)
