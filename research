@@ -322,8 +322,13 @@ def main() -> None:
         "Research question",
         default="<!-- TODO: state the central mathematical question here -->",
     )
-    vis_input = prompt("GitHub visibility [private/public]", default="private").lower()
-    visibility = "public" if vis_input.startswith("pu") else "private"
+    vis_input = prompt("GitHub visibility [private/public/local]", default="private").lower()
+    if vis_input.startswith("pu"):
+        visibility = "public"
+    elif vis_input.startswith("l"):
+        visibility = "local"
+    else:
+        visibility = "private"
 
     parent = Path(parent_str).expanduser().resolve()
     parent.mkdir(parents=True, exist_ok=True)
@@ -376,13 +381,14 @@ def main() -> None:
     # -----------------------------------------------------------------------
     # GitHub
     # -----------------------------------------------------------------------
-    gh = subprocess.run(["which", "gh"], capture_output=True)
-    if gh.returncode != 0:
+    if visibility == "local":
+        pass  # no remote
+    elif shutil.which("gh") is None:
         print(
             "\nNote: 'gh' not found — skipping GitHub step.\n"
             "To create the repo manually:\n"
             f"  cd {project_dir}\n"
-            f"  gh repo create {name} --{visibility} --source=. --remote=origin --push"
+            f"  gh repo create {name} --private --source=. --remote=origin --push"
         )
     else:
         print(f"\nCreating GitHub repo ({visibility}) …")
