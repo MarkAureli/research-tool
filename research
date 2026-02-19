@@ -412,20 +412,6 @@ def main() -> None:
             )
 
     # -----------------------------------------------------------------------
-    # Mathlib cache (one-time per machine; safe to re-run)
-    # -----------------------------------------------------------------------
-    if shutil.which("lake") is None:
-        print(
-            "\nNote: 'lake' not found — skipping Mathlib cache step.\n"
-            "Install Lean via https://leanprover.github.io/lean4/doc/quickstart.html\n"
-            "Then run manually:\n"
-            f"  cd {project_dir} && lake exe cache get"
-        )
-    else:
-        print("\nFetching Mathlib cache …")
-        run(["lake", "exe", "cache", "get"], cwd=project_dir)
-
-    # -----------------------------------------------------------------------
     # Done
     # -----------------------------------------------------------------------
     print(f"\nDone!  Project created at:\n  {project_dir}\n")
