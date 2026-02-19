@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """research — scaffold a new Lean 4 + Mathlib research project."""
 
-import os
+import shutil
 import subprocess
 import sys
 from datetime import date
@@ -408,8 +408,16 @@ def main() -> None:
     # -----------------------------------------------------------------------
     # Mathlib cache (one-time per machine; safe to re-run)
     # -----------------------------------------------------------------------
-    print("\nFetching Mathlib cache …")
-    run(["lake", "exe", "cache", "get"], cwd=project_dir)
+    if shutil.which("lake") is None:
+        print(
+            "\nNote: 'lake' not found — skipping Mathlib cache step.\n"
+            "Install Lean via https://leanprover.github.io/lean4/doc/quickstart.html\n"
+            "Then run manually:\n"
+            f"  cd {project_dir} && lake exe cache get"
+        )
+    else:
+        print("\nFetching Mathlib cache …")
+        run(["lake", "exe", "cache", "get"], cwd=project_dir)
 
     # -----------------------------------------------------------------------
     # Done
