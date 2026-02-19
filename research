@@ -1,12 +1,49 @@
 #!/usr/bin/env python3
-"""research — scaffold a new Lean 4 + Mathlib research project."""
+"""research — manage Lean 4 + Mathlib research projects.
 
+Usage:
+  research new           scaffold a new project (interactive)
+  research list          list all managed projects
+  research delete NAME   delete a project (local + GitHub)
+"""
+
+import json
 import shutil
 import subprocess
 import sys
 from datetime import date
 from pathlib import Path
 from textwrap import dedent
+
+
+# ---------------------------------------------------------------------------
+# Registry
+# ---------------------------------------------------------------------------
+
+REGISTRY_PATH = Path.home() / ".local" / "share" / "research-tool" / "projects.json"
+
+
+def registry_load() -> dict[str, str]:
+    if not REGISTRY_PATH.exists():
+        return {}
+    return json.loads(REGISTRY_PATH.read_text())
+
+
+def registry_save(reg: dict[str, str]) -> None:
+    REGISTRY_PATH.parent.mkdir(parents=True, exist_ok=True)
+    REGISTRY_PATH.write_text(json.dumps(reg, indent=2) + "\n")
+
+
+def registry_add(name: str, path: Path) -> None:
+    reg = registry_load()
+    reg[name] = str(path)
+    registry_save(reg)
+
+
+def registry_remove(name: str) -> None:
+    reg = registry_load()
+    reg.pop(name, None)
+    registry_save(reg)
 
 
 # ---------------------------------------------------------------------------
@@ -299,7 +336,7 @@ def prompt(msg: str, default: str = "") -> str:
             print("  (required — please enter a value)")
 
 
-def run(args: list[str], cwd: Path) -> bool:
+def run(args: list[str], cwd: Path | None = None) -> bool:
     """Run a subprocess; return True on success."""
     result = subprocess.run(args, cwd=cwd)
     return result.returncode == 0
@@ -309,14 +346,40 @@ def substitute(text: str, name: str) -> str:
     return text.replace("GenSeq", name)
 
 
+def get_github_remote(project_dir: Path) -> str | None:
+    """Return the GitHub remote URL, or None if there isn't one."""
+    result = subprocess.run(
+        ["git", "remote", "get-url", "origin"],
+        cwd=project_dir,
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode == 0:
+        url = result.stdout.strip()
+        if "github.com" in url:
+            return url
+    return None
+
+
 # ---------------------------------------------------------------------------
-# Main
+# Subcommands
 # ---------------------------------------------------------------------------
 
-def main() -> None:
-    print("=== research: new Lean 4 + Mathlib project ===\n")
+def cmd_new() -> None:
+    print("=== research new: Lean 4 + Mathlib project ===\n")
 
     name = prompt("Project name")
+
+    reg = registry_load()
+    if name in reg:
+        print(
+            f"Error: a project named '{name}' is already managed by this tool\n"
+            f"  (at {reg[name]})\n"
+            "Choose a different name or delete the existing project first.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
     parent_str = prompt("Parent directory", default="~/Research")
     question = prompt(
         "Research question",
@@ -340,11 +403,9 @@ def main() -> None:
 
     print(f"\nCreating {project_dir} …")
 
-    # -----------------------------------------------------------------------
     # Write files
-    # -----------------------------------------------------------------------
     project_dir.mkdir(parents=True)
-    (project_dir / name).mkdir()  # sub-library directory
+    (project_dir / name).mkdir()
 
     today = date.today().isoformat()
 
@@ -365,22 +426,15 @@ def main() -> None:
         path.write_text(substitute(content, name))
         print(f"  wrote {rel_path}")
 
-    # -----------------------------------------------------------------------
     # git init + initial commit
-    # -----------------------------------------------------------------------
     print("\nInitialising git repository …")
     if not run(["git", "init"], cwd=project_dir):
-        print("Warning: git init failed.", file=sys.stderr)
+        print("Error: git init failed.", file=sys.stderr)
         sys.exit(1)
     run(["git", "add", "."], cwd=project_dir)
-    run(
-        ["git", "commit", "-m", f"Initial scaffold for {name}"],
-        cwd=project_dir,
-    )
+    run(["git", "commit", "-m", f"Initial scaffold for {name}"], cwd=project_dir)
 
-    # -----------------------------------------------------------------------
     # GitHub
-    # -----------------------------------------------------------------------
     if visibility == "local":
         pass  # no remote
     elif shutil.which("gh") is None:
@@ -393,13 +447,8 @@ def main() -> None:
     else:
         print(f"\nCreating GitHub repo ({visibility}) …")
         ok = run(
-            [
-                "gh", "repo", "create", name,
-                f"--{visibility}",
-                "--source=.",
-                "--remote=origin",
-                "--push",
-            ],
+            ["gh", "repo", "create", name, f"--{visibility}",
+             "--source=.", "--remote=origin", "--push"],
             cwd=project_dir,
         )
         if not ok:
@@ -411,10 +460,104 @@ def main() -> None:
                 file=sys.stderr,
             )
 
-    # -----------------------------------------------------------------------
-    # Done
-    # -----------------------------------------------------------------------
+    # Register
+    registry_add(name, project_dir)
+
     print(f"\nDone!  Project created at:\n  {project_dir}\n")
+
+
+def cmd_list() -> None:
+    reg = registry_load()
+    if not reg:
+        print("No projects managed by this tool yet.")
+        return
+    for name, path in sorted(reg.items()):
+        print(f"{name}\t{path}")
+
+
+def cmd_delete(name: str) -> None:
+    reg = registry_load()
+    if name not in reg:
+        print(f"Error: no project named '{name}' in the registry.", file=sys.stderr)
+        sys.exit(1)
+
+    project_dir = Path(reg[name])
+
+    # Confirm
+    print(f"Project : {name}")
+    print(f"Path    : {project_dir}")
+    remote = get_github_remote(project_dir) if project_dir.exists() else None
+    if remote:
+        print(f"Remote  : {remote}")
+    answer = input("\nPermanently delete local directory and GitHub repo? [y/N]: ").strip().lower()
+    if answer != "y":
+        print("Aborted.")
+        return
+
+    # Delete GitHub repo
+    if remote:
+        if shutil.which("gh") is None:
+            print(
+                "Note: 'gh' not found — cannot delete GitHub repo automatically.\n"
+                f"Delete it manually at: {remote}"
+            )
+        else:
+            print("Deleting GitHub repo …")
+            ok = run(["gh", "repo", "delete", name, "--yes"])
+            if not ok:
+                print(
+                    "Warning: GitHub repo deletion failed.\n"
+                    "You may need to grant the delete_repo scope:\n"
+                    "  gh auth refresh -h github.com -s delete_repo\n"
+                    f"Then: gh repo delete {name} --yes",
+                    file=sys.stderr,
+                )
+
+    # Delete local directory
+    if project_dir.exists():
+        print(f"Deleting {project_dir} …")
+        shutil.rmtree(project_dir)
+    else:
+        print(f"Note: {project_dir} not found locally (already deleted?).")
+
+    # Remove from registry
+    registry_remove(name)
+    print("Done.")
+
+
+# ---------------------------------------------------------------------------
+# Entry point
+# ---------------------------------------------------------------------------
+
+USAGE = """\
+Usage:
+  research new           scaffold a new project (interactive)
+  research list          list all managed projects
+  research delete NAME   delete a project (local + GitHub)
+"""
+
+
+def main() -> None:
+    args = sys.argv[1:]
+
+    if not args or args[0] in ("-h", "--help"):
+        print(USAGE)
+        return
+
+    cmd = args[0]
+
+    if cmd == "new":
+        cmd_new()
+    elif cmd == "list":
+        cmd_list()
+    elif cmd == "delete":
+        if len(args) < 2:
+            print("Usage: research delete NAME", file=sys.stderr)
+            sys.exit(1)
+        cmd_delete(args[1])
+    else:
+        print(f"Unknown command: {cmd!r}\n{USAGE}", file=sys.stderr)
+        sys.exit(1)
 
 
 if __name__ == "__main__":
