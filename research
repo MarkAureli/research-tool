@@ -590,7 +590,8 @@ def cmd_delete(name: str) -> None:
     remote = get_github_remote(project_dir) if project_dir.exists() else None
     if remote:
         print(f"Remote  : {remote}")
-    answer = input("\nPermanently delete local directory and GitHub repo? [y/N]: ").strip().lower()
+    suffix = " and GitHub repo" if remote else ""
+    answer = input(f"\nPermanently delete local directory{suffix}? [y/N]: ").strip().lower()
     if answer != "y":
         print("Aborted.")
         return
