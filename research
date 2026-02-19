@@ -47,16 +47,16 @@ def registry_remove(name: str) -> None:
 
 
 # ---------------------------------------------------------------------------
-# File templates (GenSeq is the placeholder; replaced with the project name)
+# File templates (MyProject is the placeholder; replaced with the project name)
 # ---------------------------------------------------------------------------
 
 LEAN_TOOLCHAIN = "leanprover/lean4:v4.27.0\n"
 
 LAKEFILE_TOML = dedent("""\
-    name = "GenSeq"
+    name = "MyProject"
     version = "0.1.0"
     keywords = ["math"]
-    defaultTargets = ["GenSeq"]
+    defaultTargets = ["MyProject"]
 
     [leanOptions]
     pp.unicode.fun = true # pretty-prints `fun a ↦ b`
@@ -70,7 +70,7 @@ LAKEFILE_TOML = dedent("""\
     rev = "v4.27.0"
 
     [[lean_lib]]
-    name = "GenSeq"
+    name = "MyProject"
 """)
 
 LAKE_MANIFEST = dedent("""\
@@ -167,7 +167,7 @@ LAKE_MANIFEST = dedent("""\
        "inputRev": "v4.27.0",
        "inherited": true,
        "configFile": "lakefile.toml"}],
-     "name": "GenSeq",
+     "name": "MyProject",
      "lakeDir": ".lake"}
 """)
 
@@ -176,44 +176,24 @@ GITIGNORE = dedent("""\
     /references/
 """)
 
-ROOT_LEAN = "import GenSeq.Basic\n"
+ROOT_LEAN = "import MyProject.Basic\n"
 
-BASIC_LEAN = dedent("""\
-    /-
-    # GenSeq — Basic Setup
-
-    Common imports and variable declarations.
-    All other files in `GenSeq/` should import this module.
-
-    Replace the imports below with whatever Mathlib modules your question requires.
-    -/
-    import Mathlib
-
-    open scoped BigOperators
-
-    namespace GenSeq
-
-    -- TODO: add variable declarations once the question is formulated
-    -- Example:
-    -- variable {α : Type*} [SomeTypeclass α]
-
-    end GenSeq
-""")
+BASIC_LEAN = 'def hello := "world"\n'
 
 CLAUDE_MD = dedent("""\
-    # CLAUDE.md -- GenSeq
+    # CLAUDE.md -- MyProject
 
     ## Build Command
 
     ```bash
-    lake build GenSeq 2>&1 | tail -40
+    lake build MyProject 2>&1 | tail -40
     ```
 
     **NEVER run bare `lake build`** -- it rebuilds all of mathlib (~2 hours).
 
     ## Project Structure
 
-    - `GenSeq/` -- Lean 4 source files
+    - `MyProject/` -- Lean 4 source files
     - `HANDOFF.md` -- Mathematical analysis and implementation plan
 
     ## The Problem
@@ -223,12 +203,12 @@ CLAUDE_MD = dedent("""\
     ## Workflow
 
     1. Read `HANDOFF.md` first
-    2. Build after every step: `lake build GenSeq 2>&1 | tail -40`
+    2. Build after every step: `lake build MyProject 2>&1 | tail -40`
     3. Sorries with documented goal states = success
 """)
 
 HANDOFF_MD = dedent("""\
-    # HANDOFF: GenSeq
+    # HANDOFF: MyProject
 
     ## The Problem
 
@@ -270,9 +250,9 @@ HANDOFF_MD = dedent("""\
 
     ### Step 1: Basic Setup
 
-    Create `GenSeq/Basic.lean` with imports and variable declarations.
+    Create `MyProject/Basic.lean` with imports and variable declarations.
 
-    **Verify**: `lake build GenSeq 2>&1 | tail -40`
+    **Verify**: `lake build MyProject 2>&1 | tail -40`
 
     ### Step 2: ...
 
@@ -299,7 +279,7 @@ AGENTS_MD = dedent("""\
     ## Build Command
 
     ```bash
-    lake build GenSeq 2>&1 | tail -40
+    lake build MyProject 2>&1 | tail -40
     ```
 
     **NEVER run bare `lake build`** — it rebuilds all of mathlib (~2 hours).
@@ -322,7 +302,7 @@ AGENTS_MD = dedent("""\
     **MANDATORY — work is NOT complete until `git push` succeeds.**
 
     1. File GitHub issues for all remaining work
-    2. Run quality gates: `lake build GenSeq 2>&1 | tail -40`
+    2. Run quality gates: `lake build MyProject 2>&1 | tail -40`
     3. Update `HANDOFF.md` session log — append what was done, current state, next steps
     4. Commit and push:
        ```bash
@@ -366,7 +346,7 @@ def run(args: list[str], cwd: Path | None = None) -> bool:
 
 
 def substitute(text: str, name: str) -> str:
-    return text.replace("GenSeq", name)
+    return text.replace("MyProject", name)
 
 
 def get_github_remote(project_dir: Path) -> str | None:
