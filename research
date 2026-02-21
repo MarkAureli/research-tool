@@ -8,6 +8,7 @@ Usage:
   research completion       print shell completion script
 """
 
+import base64
 import json
 import shutil
 import subprocess
@@ -307,6 +308,51 @@ def build_apache_license(year: int, author: str) -> str:
 
 
 # ---------------------------------------------------------------------------
+# .claude/ tooling (fetched from vibefeld at scaffold time)
+# ---------------------------------------------------------------------------
+
+_VIBEFELD = "MarkAureli/vibefeld"
+
+_CLAUDE_FILES = [
+    ".claude/docs/lean4/axiom-elimination.md",
+    ".claude/docs/lean4/compiler-guided-repair.md",
+    ".claude/docs/lean4/lean-lsp-tools-api.md",
+    ".claude/docs/lean4/proof-golfing.md",
+    ".claude/docs/lean4/sorry-filling.md",
+    ".claude/tools/lean4/analyze_let_usage.py",
+    ".claude/tools/lean4/check_axioms.sh",
+    ".claude/tools/lean4/count_tokens.py",
+    ".claude/tools/lean4/find_golfable.py",
+    ".claude/tools/lean4/search_mathlib.sh",
+    ".claude/tools/lean4/smart_search.sh",
+    ".claude/tools/lean4/sorry_analyzer.py",
+    ".claude/tools/lean4/suggest_tactics.sh",
+]
+
+
+def copy_claude_tools(project_dir: Path) -> None:
+    """Fetch .claude/ Lean 4 tools from vibefeld and write them into the project."""
+    print("\nCopying .claude/ Lean 4 tools from vibefeld …")
+    ok = 0
+    for rel in _CLAUDE_FILES:
+        result = subprocess.run(
+            ["gh", "api", f"repos/{_VIBEFELD}/contents/{rel}", "--jq", ".content"],
+            capture_output=True, text=True,
+        )
+        if result.returncode != 0:
+            print(f"  warning: could not fetch {rel}", file=sys.stderr)
+            continue
+        content = base64.b64decode(result.stdout.strip()).decode()
+        dest = project_dir / rel
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        dest.write_text(content)
+        if rel.endswith((".sh", ".py")):
+            dest.chmod(0o755)
+        ok += 1
+    print(f"  {ok}/{len(_CLAUDE_FILES)} files copied")
+
+
+# ---------------------------------------------------------------------------
 # Subcommands
 # ---------------------------------------------------------------------------
 
@@ -346,13 +392,18 @@ def cmd_new() -> None:
         print("Error: lake init failed.", file=sys.stderr)
         sys.exit(1)
 
+    # Fetch pre-built mathlib oleans (saves ~2 hours on first build)
+    print("\nFetching Mathlib cache …")
+    run(["lake", "exe", "cache", "get"], cwd=project_dir)
+
     # lake init math generates CI workflows we don't want — remove them
     shutil.rmtree(project_dir / ".github", ignore_errors=True)
 
-    # Append our extra gitignore entry to what lake generated
-    gitignore_path = project_dir / ".gitignore"
-    with open(gitignore_path, "a") as f:
+    # Append our extra entries to files lake generated
+    with open(project_dir / ".gitignore", "a") as f:
         f.write("/references/\n")
+    with open(project_dir / ".gitattributes", "a") as f:
+        f.write("*.jsonl merge=union\n")
 
     # Write custom files
     today = date.today()
@@ -368,6 +419,9 @@ def cmd_new() -> None:
         path = project_dir / rel_path
         path.write_text(substitute(content, name))
         print(f"  wrote {rel_path}")
+
+    # Copy .claude/ Lean 4 tools from vibefeld
+    copy_claude_tools(project_dir)
 
     # Create GitHub remote before bd init so beads can find the upstream
     has_remote = False
@@ -408,6 +462,11 @@ def cmd_new() -> None:
     if shutil.which("af") is None:
         print("\nNote: 'af' not found — install vibefeld for adversarial proof trees.")
         print("  https://github.com/MarkAureli/vibefeld")
+
+    # uvx is required at runtime by .mcp.json (lean-lsp-mcp server)
+    if shutil.which("uvx") is None:
+        print("\nNote: 'uvx' not found — required by .mcp.json to run lean-lsp-mcp.")
+        print("  Install uv: https://docs.astral.sh/uv/getting-started/installation/")
 
     # Initial commit (includes beads files) + push
     run(["git", "add", "."], cwd=project_dir)

@@ -71,6 +71,9 @@ Each new project contains:
 | `CLAUDE.md` | Build command + project notes |
 | `AGENTS.md` | Agent instructions |
 | `.mcp.json` | Lean 4 LSP MCP server (`lean-lsp-mcp` via `uvx`) |
+| `.gitattributes` | `*.jsonl merge=union` for clean beads merges |
+| `.claude/docs/lean4/` | Lean 4 reference docs (axiom elimination, proof golfing, …) |
+| `.claude/tools/lean4/` | Lean 4 helper scripts (sorry analyser, mathlib search, …) |
 
 `af` (vibefeld) is available for adversarial proof trees but not initialised at scaffold time — it requires a specific conjecture. See `AGENTS.md` for usage.
 
