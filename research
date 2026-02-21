@@ -56,10 +56,38 @@ def pick(question: str, options: list[str]) -> str:
 
 
 # ---------------------------------------------------------------------------
-# Registry
+# Config (persisted across projects — stores author name, etc.)
 # ---------------------------------------------------------------------------
 
-REGISTRY_PATH = Path.home() / ".local" / "share" / "research-tool" / "projects.json"
+_STORE = Path.home() / ".local" / "share" / "research-tool"
+REGISTRY_PATH = _STORE / "projects.json"
+CONFIG_PATH   = _STORE / "config.json"
+
+
+def config_load() -> dict:
+    if not CONFIG_PATH.exists():
+        return {}
+    return json.loads(CONFIG_PATH.read_text())
+
+
+def config_save(cfg: dict) -> None:
+    CONFIG_PATH.parent.mkdir(parents=True, exist_ok=True)
+    CONFIG_PATH.write_text(json.dumps(cfg, indent=2) + "\n")
+
+
+def get_or_prompt_author() -> str:
+    cfg = config_load()
+    if "author" in cfg:
+        return cfg["author"]
+    author = prompt("Author name (stored for future projects)")
+    cfg["author"] = author
+    config_save(cfg)
+    return author
+
+
+# ---------------------------------------------------------------------------
+# Registry
+# ---------------------------------------------------------------------------
 
 
 def registry_load() -> dict[str, str]:
@@ -315,6 +343,35 @@ def get_github_remote(project_dir: Path) -> str | None:
 
 
 # ---------------------------------------------------------------------------
+# Apache 2.0 license
+# ---------------------------------------------------------------------------
+
+def build_apache_license(year: int, author: str) -> str:
+    """Fetch Apache 2.0 text from the GitHub licenses API and fill placeholders."""
+    result = subprocess.run(
+        ["gh", "api", "/licenses/apache-2.0", "--jq", ".body"],
+        capture_output=True, text=True,
+    )
+    if result.returncode == 0:
+        body = result.stdout.strip()
+        body = body.replace("[yyyy]", str(year)).replace("[name of copyright owner]", author)
+        return f"Copyright {year} {author}\n\n" + body
+    # Fallback if gh is unavailable
+    return (
+        f"Copyright {year} {author}\n\n"
+        'Licensed under the Apache License, Version 2.0 (the "License");\n'
+        "you may not use this file except in compliance with the License.\n"
+        "You may obtain a copy of the License at\n\n"
+        "    http://www.apache.org/licenses/LICENSE-2.0\n\n"
+        "Unless required by applicable law or agreed to in writing, software\n"
+        'distributed under the License is distributed on an "AS IS" BASIS,\n'
+        "WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n"
+        "See the License for the specific language governing permissions and\n"
+        "limitations under the License.\n"
+    )
+
+
+# ---------------------------------------------------------------------------
 # Subcommands
 # ---------------------------------------------------------------------------
 
@@ -339,6 +396,7 @@ def cmd_new() -> None:
         default="<!-- TODO: state the central mathematical question here -->",
     )
     visibility = pick("GitHub visibility", ["private", "public", "local"])
+    author = get_or_prompt_author()
 
     parent = Path(parent_str).expanduser().resolve()
     parent.mkdir(parents=True, exist_ok=True)
@@ -366,11 +424,12 @@ def cmd_new() -> None:
         f.write("/references/\n")
 
     # Write custom files
-    today = date.today().isoformat()
+    today = date.today()
 
     files: dict[str, str] = {
+        "LICENSE": build_apache_license(today.year, author),
         "CLAUDE.md": CLAUDE_MD.format(question=question),
-        "HANDOFF.md": HANDOFF_MD.format(question=question, today=today),
+        "HANDOFF.md": HANDOFF_MD.format(question=question, today=today.isoformat()),
         "AGENTS.md": AGENTS_MD,
         ".mcp.json": MCP_JSON,
     }

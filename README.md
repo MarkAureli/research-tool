@@ -61,6 +61,7 @@ Each new project contains:
 
 | File | Purpose |
 |------|---------|
+| `LICENSE` | Apache License 2.0 |
 | `lean-toolchain` | Lean version pin |
 | `lakefile.toml` | Lake config with mathlib v4.27.0 |
 | `lake-manifest.json` | Lockfile |
