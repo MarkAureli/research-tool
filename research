@@ -133,10 +133,6 @@ CLAUDE_MD = dedent("""\
     - `MyProject/` -- Lean 4 source files
     - `HANDOFF.md` -- Mathematical analysis and implementation plan
 
-    ## The Problem
-
-    {question}
-
     ## Workflow
 
     1. Read `HANDOFF.md` first
@@ -144,67 +140,6 @@ CLAUDE_MD = dedent("""\
     3. Sorries with documented goal states = success
 """)
 
-HANDOFF_MD = dedent("""\
-    # HANDOFF: MyProject
-
-    ## The Problem
-
-    {question}
-
-    **Question**: ...
-
-    **Stakes**: ...
-
-    ---
-
-    ## Mathematical Background
-
-    <!-- TODO: background, definitions, what's known -->
-
-    ### What's Known
-
-    **Trivial direction**:
-
-    **Hard direction**:
-
-    ### The Open Question
-
-    ---
-
-    ## Detailed Mathematical Analysis
-
-    <!-- TODO: why naive approaches fail, what the real difficulty is -->
-
-    ---
-
-    ## Existing Mathlib API
-
-    <!-- TODO: list relevant Mathlib theorems and definitions -->
-
-    ---
-
-    ## Step-by-Step Implementation Plan
-
-    ### Step 1: Basic Setup
-
-    Create `MyProject/Basic.lean` with imports and variable declarations.
-
-    **Verify**: `lake build MyProject 2>&1 | tail -40`
-
-    ### Step 2: ...
-
-    <!-- TODO: fill in remaining steps at 10-50 LOC granularity -->
-
-    ---
-
-    ## Session Log
-
-    <!-- Append a new entry after each work session -->
-
-    ### Session 1 — {today}
-    - Set up project skeleton
-    - Next: fill in mathematical question and implementation plan
-""")
 
 MCP_JSON = dedent("""\
     {
@@ -391,10 +326,6 @@ def cmd_new() -> None:
         sys.exit(1)
 
     parent_str = prompt("Parent directory", default="~/Research")
-    question = prompt(
-        "Research question",
-        default="<!-- TODO: state the central mathematical question here -->",
-    )
     visibility = pick("GitHub visibility", ["private", "public", "local"])
     author = get_or_prompt_author()
 
@@ -428,8 +359,7 @@ def cmd_new() -> None:
 
     files: dict[str, str] = {
         "LICENSE": build_apache_license(today.year, author),
-        "CLAUDE.md": CLAUDE_MD.format(question=question),
-        "HANDOFF.md": HANDOFF_MD.format(question=question, today=today.isoformat()),
+        "CLAUDE.md": CLAUDE_MD,
         "AGENTS.md": AGENTS_MD,
         ".mcp.json": MCP_JSON,
     }
