@@ -219,6 +219,34 @@ AGENTS_MD = dedent("""\
     File a task for every sorry, every TODO, and every planned follow-up
     before ending a session.
 
+    ## Adversarial Proof Trees
+
+    Use `af` (vibefeld) to manage structured, multi-agent proof trees for
+    specific conjectures. Create a subdirectory per conjecture:
+
+    ```bash
+    # Initialise (once per conjecture)
+    mkdir <proof-dir>
+    af init --conjecture "..." --author "Claude" --dir <proof-dir>
+
+    # Navigate
+    af status              # view the proof tree
+    af jobs                # see available work
+
+    # Verifier workflow
+    af claim <id>          # claim a node
+    af accept <id>         # validate it
+    af challenge <id> "..."  # raise an objection
+
+    # Prover workflow
+    af claim <id>          # claim a challenged node
+    af refine <id> "..."   # break into sub-claims
+    af resolve-challenge <id> <ch-id> "..."
+
+    # Export
+    af export --format latex   # for reports
+    ```
+
     ## Landing the Plane (Session Completion)
 
     **MANDATORY — work is NOT complete until `git push` succeeds.**
@@ -386,6 +414,11 @@ def cmd_new() -> None:
     else:
         print("\nNote: 'bd' not found — skipping beads init.")
         print("Install beads: curl -fsSL https://raw.githubusercontent.com/steveyegge/beads/main/scripts/install.sh | bash")
+
+    # af availability check (init requires a conjecture, so deferred to first use)
+    if shutil.which("af") is None:
+        print("\nNote: 'af' not found — install vibefeld for adversarial proof trees.")
+        print("  https://github.com/MarkAureli/vibefeld")
 
     # Initial commit (includes beads files) + push
     run(["git", "add", "."], cwd=project_dir)

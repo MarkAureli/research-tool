@@ -72,6 +72,8 @@ Each new project contains:
 | `AGENTS.md` | Agent instructions |
 | `.mcp.json` | Lean 4 LSP MCP server (`lean-lsp-mcp` via `uvx`) |
 
+`af` (vibefeld) is available for adversarial proof trees but not initialised at scaffold time — it requires a specific conjecture. See `AGENTS.md` for usage.
+
 ## Acknowledgements
 
 Project structure inspired by
