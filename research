@@ -178,6 +178,19 @@ HANDOFF_MD = dedent("""\
     - Next: fill in mathematical question and implementation plan
 """)
 
+MCP_JSON = dedent("""\
+    {
+      "mcpServers": {
+        "lean-lsp": {
+          "type": "stdio",
+          "command": "uvx",
+          "args": ["lean-lsp-mcp"],
+          "env": {}
+        }
+      }
+    }
+""")
+
 AGENTS_MD = dedent("""\
     # Agent Instructions
 
@@ -331,6 +344,7 @@ def cmd_new() -> None:
         "CLAUDE.md": CLAUDE_MD.format(question=question),
         "HANDOFF.md": HANDOFF_MD.format(question=question, today=today),
         "AGENTS.md": AGENTS_MD,
+        ".mcp.json": MCP_JSON,
     }
 
     for rel_path, content in files.items():

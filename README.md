@@ -70,6 +70,7 @@ Each new project contains:
 | `CLAUDE.md` | Build command + project notes |
 | `HANDOFF.md` | Mathematical context + session log |
 | `AGENTS.md` | Agent instructions |
+| `.mcp.json` | Lean 4 LSP MCP server (`lean-lsp-mcp` via `uvx`) |
 
 ## Acknowledgements
 
