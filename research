@@ -428,10 +428,19 @@ def cmd_delete(name: str) -> None:
 
     project_dir = Path(reg[name])
 
+    # If the directory no longer exists, just purge the registry entry.
+    if not project_dir.exists():
+        print(f"Project : {name}")
+        print(f"Path    : {project_dir}")
+        print("Note: directory not found — removing stale registry entry.")
+        registry_remove(name)
+        print("Done.")
+        return
+
     # Confirm
     print(f"Project : {name}")
     print(f"Path    : {project_dir}")
-    remote = get_github_remote(project_dir) if project_dir.exists() else None
+    remote = get_github_remote(project_dir)
     if remote:
         print(f"Remote  : {remote}")
     suffix = " and GitHub repo" if remote else ""
@@ -460,11 +469,8 @@ def cmd_delete(name: str) -> None:
                 )
 
     # Delete local directory
-    if project_dir.exists():
-        print(f"Deleting {project_dir} …")
-        shutil.rmtree(project_dir)
-    else:
-        print(f"Note: {project_dir} not found locally (already deleted?).")
+    print(f"Deleting {project_dir} …")
+    shutil.rmtree(project_dir)
 
     # Remove from registry
     registry_remove(name)
