@@ -185,34 +185,6 @@ AGENTS_MD = dedent("""\
     File a task for every sorry, every TODO, and every planned follow-up
     before ending a session.
 
-    ## Adversarial Proof Trees
-
-    Use `af` (vibefeld) to manage structured, multi-agent proof trees for
-    specific conjectures. Create a subdirectory per conjecture:
-
-    ```bash
-    # Initialise (once per conjecture)
-    mkdir <proof-dir>
-    af init --conjecture "..." --author "Claude" --dir <proof-dir>
-
-    # Navigate
-    af status              # view the proof tree
-    af jobs                # see available work
-
-    # Verifier workflow
-    af claim <id>          # claim a node
-    af accept <id>         # validate it
-    af challenge <id> "..."  # raise an objection
-
-    # Prover workflow
-    af claim <id>          # claim a challenged node
-    af refine <id> "..."   # break into sub-claims
-    af resolve-challenge <id> <ch-id> "..."
-
-    # Export
-    af export --format latex   # for reports
-    ```
-
     ## Landing the Plane (Session Completion)
 
     **When ending a work session**, you MUST complete ALL steps below. Work is NOT complete until `git push` succeeds.
@@ -318,11 +290,6 @@ def build_apache_license(year: int, author: str) -> str:
 _VIBEFELD = "MarkAureli/vibefeld"
 
 _CLAUDE_FILES = [
-    ".claude/docs/lean4/axiom-elimination.md",
-    ".claude/docs/lean4/compiler-guided-repair.md",
-    ".claude/docs/lean4/lean-lsp-tools-api.md",
-    ".claude/docs/lean4/proof-golfing.md",
-    ".claude/docs/lean4/sorry-filling.md",
     ".claude/tools/lean4/analyze_let_usage.py",
     ".claude/tools/lean4/check_axioms.sh",
     ".claude/tools/lean4/count_tokens.py",
