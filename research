@@ -4,6 +4,7 @@
 Usage:
   research new              scaffold a new project (interactive)
   research list             list all managed projects
+  research cd NAME          cd to a project directory
   research delete NAME      delete a project (local + GitHub)
   research completion       print shell completion script
 """
@@ -479,13 +480,25 @@ def cmd_delete(name: str) -> None:
 
 COMPLETION_SCRIPT = dedent("""\
     # research shell completion
+
+    # Shell wrapper: intercepts 'research cd' to actually change directory.
+    # All other subcommands are passed through to the binary unchanged.
+    research() {
+        if [[ $1 == cd ]]; then
+            local dir
+            dir=$(command research cd "$2") && builtin cd "$dir"
+        else
+            command research "$@"
+        fi
+    }
+
     _research_complete() {
         local -a subcmds projects
-        subcmds=(new list delete completion)
+        subcmds=(new list delete cd completion)
         if [[ $CURRENT -eq 2 ]]; then
             compadd -a subcmds
-        elif [[ $CURRENT -eq 3 && $words[2] == delete ]]; then
-            projects=($(research list 2>/dev/null | awk '{print $1}'))
+        elif [[ $CURRENT -eq 3 && ( $words[2] == delete || $words[2] == cd ) ]]; then
+            projects=($(command research list 2>/dev/null | awk '{print $1}'))
             compadd -a projects
         fi
     }
@@ -493,6 +506,18 @@ COMPLETION_SCRIPT = dedent("""\
 """)
 
 COMPLETION_EVAL_LINE = 'eval "$(research completion)"'
+
+
+def cmd_cd(name: str) -> None:
+    reg = registry_load()
+    if name not in reg:
+        print(f"Error: no project named '{name}' in the registry.", file=sys.stderr)
+        sys.exit(1)
+    project_dir = Path(reg[name])
+    if not project_dir.exists():
+        print(f"Error: {project_dir} does not exist.", file=sys.stderr)
+        sys.exit(1)
+    print(project_dir)
 
 
 def cmd_completion(install: bool = False) -> None:
@@ -518,6 +543,7 @@ USAGE = """\
 Usage:
   research new                  scaffold a new project (interactive)
   research list                 list all managed projects
+  research cd NAME              cd to a project directory
   research delete NAME          delete a project (local + GitHub)
   research completion           print shell completion script
   research completion install   add completion to ~/.zshrc
@@ -537,6 +563,11 @@ def main() -> None:
         cmd_new()
     elif cmd == "list":
         cmd_list()
+    elif cmd == "cd":
+        if len(args) < 2:
+            print("Usage: research cd NAME", file=sys.stderr)
+            sys.exit(1)
+        cmd_cd(args[1])
     elif cmd == "delete":
         if len(args) < 2:
             print("Usage: research delete NAME", file=sys.stderr)
