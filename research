@@ -194,6 +194,7 @@ AGENTS_MD = dedent("""\
        ```bash
        git pull --rebase
        bd sync
+       git diff --cached --quiet || git commit -m "Sync beads state"
        git push
        git status  # MUST show "up to date with origin"
        ```
