@@ -159,9 +159,18 @@ MCP_JSON = dedent("""\
 AGENTS_MD = dedent("""\
     # Agent Instructions
 
-    ## Project Context
+    ## Issue Tracking
 
-    Lean 4 formalization project. See `HANDOFF.md` for the central question and implementation plan.
+    This project uses **bd (beads)** for issue tracking.
+    Run `bd prime` for workflow context, or install hooks (`bd hooks install`) for auto-injection.
+
+    **Quick reference:**
+    - `bd ready` - Find unblocked work
+    - `bd create "Title" --type task --priority 2` - Create issue
+    - `bd close <id>` - Complete work
+    - `bd sync` - Sync with git (run at session end)
+
+    For full workflow details: `bd prime`
 
     ## Build Command
 
@@ -170,19 +179,6 @@ AGENTS_MD = dedent("""\
     ```
 
     **NEVER run bare `lake build`** — it rebuilds all of mathlib (~2 hours).
-
-    ## Issue Tracking
-
-    Use `bd` (beads) to track remaining work:
-
-    ```bash
-    bd new "..." -p P0              # file new work item (P0 = high priority)
-    bd ls                           # see open items
-    bd close <id>                   # mark done
-    ```
-
-    File a task for every sorry, every TODO, and every planned follow-up
-    before ending a session.
 
     ## Landing the Plane (Session Completion)
 
