@@ -5,6 +5,7 @@ Usage:
   research new              scaffold a new project (interactive)
   research list             list all managed projects
   research cd NAME          cd to a project directory
+  research rename OLD NEW   rename a project (directory + GitHub repo)
   research delete NAME      delete a project (local + GitHub)
   research completion       print shell completion script
 """
@@ -503,10 +504,10 @@ COMPLETION_SCRIPT = dedent("""\
 
     _research_complete() {
         local -a subcmds projects
-        subcmds=(new list delete cd completion)
+        subcmds=(new list delete cd rename completion)
         if [[ $CURRENT -eq 2 ]]; then
             compadd -a subcmds
-        elif [[ $CURRENT -eq 3 && ( $words[2] == delete || $words[2] == cd ) ]]; then
+        elif [[ $CURRENT -eq 3 && ( $words[2] == delete || $words[2] == cd || $words[2] == rename ) ]]; then
             projects=($(command research list 2>/dev/null | awk '{print $1}'))
             compadd -a projects
         fi
@@ -515,6 +516,54 @@ COMPLETION_SCRIPT = dedent("""\
 """)
 
 COMPLETION_EVAL_LINE = 'eval "$(research completion)"'
+
+
+def cmd_rename(old_name: str, new_name: str) -> None:
+    reg = registry_load()
+    if old_name not in reg:
+        print(f"Error: no project named '{old_name}' in the registry.", file=sys.stderr)
+        sys.exit(1)
+    if new_name in reg:
+        print(f"Error: '{new_name}' already exists in the registry.", file=sys.stderr)
+        sys.exit(1)
+
+    project_dir = Path(reg[old_name])
+
+    if not project_dir.exists():
+        print(f"Note: {project_dir} not found — removing stale registry entry.", file=sys.stderr)
+        registry_remove(old_name)
+        sys.exit(1)
+
+    new_dir = project_dir.parent / new_name
+    if new_dir.exists():
+        print(f"Error: {new_dir} already exists.", file=sys.stderr)
+        sys.exit(1)
+
+    remote = get_github_remote(project_dir)
+
+    # Rename local directory
+    print(f"Renaming {project_dir} → {new_dir} …")
+    project_dir.rename(new_dir)
+
+    # Rename GitHub repo (remote URL still points to old name after local rename)
+    if remote:
+        if shutil.which("gh") is None:
+            print(
+                "Note: 'gh' not found — cannot rename GitHub repo automatically.\n"
+                f"Rename it manually at: {remote}"
+            )
+        else:
+            print(f"Renaming GitHub repo to {new_name} …")
+            ok = run(["gh", "repo", "rename", new_name, "-y"], cwd=new_dir)
+            if not ok:
+                print("Warning: GitHub repo rename failed.", file=sys.stderr)
+
+    # Update registry
+    registry_remove(old_name)
+    registry_add(new_name, new_dir)
+
+    print("Done.")
+    print(f"Note: Lean source files still reference '{old_name}' — update lakefile.toml and .lean files if needed.")
 
 
 def cmd_cd(name: str) -> None:
@@ -554,6 +603,7 @@ Usage:
   research new                  scaffold a new project (interactive)
   research list                 list all managed projects
   research cd NAME              cd to a project directory
+  research rename OLD NEW       rename a project (directory + GitHub repo)
   research delete NAME          delete a project (local + GitHub)
   research completion           print shell completion script
   research completion install   add completion to ~/.zshrc
@@ -573,6 +623,11 @@ def main() -> None:
         cmd_new(args[1] if len(args) > 1 else "")
     elif cmd == "list":
         cmd_list()
+    elif cmd == "rename":
+        if len(args) < 3:
+            print("Usage: research rename OLD NEW", file=sys.stderr)
+            sys.exit(1)
+        cmd_rename(args[1], args[2])
     elif cmd == "cd":
         if len(args) < 2:
             print("Usage: research cd NAME", file=sys.stderr)
