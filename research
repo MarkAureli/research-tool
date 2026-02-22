@@ -515,7 +515,8 @@ def cmd_cd(name: str) -> None:
         sys.exit(1)
     project_dir = Path(reg[name])
     if not project_dir.exists():
-        print(f"Error: {project_dir} does not exist.", file=sys.stderr)
+        print(f"Note: {project_dir} not found — removing stale registry entry.", file=sys.stderr)
+        registry_remove(name)
         sys.exit(1)
     print(project_dir)
 
