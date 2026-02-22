@@ -417,6 +417,14 @@ def cmd_list() -> None:
     if not reg:
         print("No projects managed by this tool yet.")
         return
+    stale = [name for name, path in reg.items() if not Path(path).exists()]
+    for name in stale:
+        print(f"Note: {reg[name]} not found — removing stale entry '{name}'.", file=sys.stderr)
+        registry_remove(name)
+        del reg[name]
+    if not reg:
+        print("No projects managed by this tool yet.")
+        return
     for name, path in sorted(reg.items()):
         print(f"{name}\t{path}")
 
