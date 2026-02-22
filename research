@@ -133,12 +133,14 @@ CLAUDE_MD = dedent("""\
 
     - `MyProject/` -- Lean 4 source files
     - `HANDOFF.md` -- Mathematical analysis and implementation plan
+    - `AGENTS.md` -- Agent instructions (read after `HANDOFF.md`)
 
     ## Workflow
 
     1. Read `HANDOFF.md` first
-    2. Build after every step: `lake build MyProject 2>&1 | tail -40`
-    3. Sorries with documented goal states = success
+    2. Read `AGENTS.md` second
+    3. Build after every step: `lake build MyProject 2>&1 | tail -40`
+    4. Sorries with documented goal states = success
 """)
 
 
