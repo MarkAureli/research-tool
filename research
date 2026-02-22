@@ -441,7 +441,15 @@ def cmd_new() -> None:
              "--source=.", "--remote=origin"],
             cwd=project_dir,
         )
-        if not has_remote:
+        if has_remote:
+            # beads sync expects a remote named "upstream"; point it at origin
+            origin_url = subprocess.run(
+                ["git", "remote", "get-url", "origin"],
+                cwd=project_dir, capture_output=True, text=True,
+            ).stdout.strip()
+            if origin_url:
+                run(["git", "remote", "add", "upstream", origin_url], cwd=project_dir)
+        else:
             print(
                 "Warning: gh repo create failed.\n"
                 "You can retry manually:\n"
