@@ -8,7 +8,6 @@ Usage:
   research completion       print shell completion script
 """
 
-import base64
 import json
 import shutil
 import subprocess
@@ -283,45 +282,6 @@ def build_apache_license(year: int, author: str) -> str:
     )
 
 
-# ---------------------------------------------------------------------------
-# .claude/ tooling (fetched from vibefeld at scaffold time)
-# ---------------------------------------------------------------------------
-
-_VIBEFELD = "MarkAureli/vibefeld"
-
-_CLAUDE_FILES = [
-    ".claude/tools/lean4/analyze_let_usage.py",
-    ".claude/tools/lean4/check_axioms.sh",
-    ".claude/tools/lean4/count_tokens.py",
-    ".claude/tools/lean4/find_golfable.py",
-    ".claude/tools/lean4/search_mathlib.sh",
-    ".claude/tools/lean4/smart_search.sh",
-    ".claude/tools/lean4/sorry_analyzer.py",
-    ".claude/tools/lean4/suggest_tactics.sh",
-]
-
-
-def copy_claude_tools(project_dir: Path) -> None:
-    """Fetch .claude/ Lean 4 tools from vibefeld and write them into the project."""
-    print("\nCopying .claude/ Lean 4 tools from vibefeld …")
-    ok = 0
-    for rel in _CLAUDE_FILES:
-        result = subprocess.run(
-            ["gh", "api", f"repos/{_VIBEFELD}/contents/{rel}", "--jq", ".content"],
-            capture_output=True, text=True,
-        )
-        if result.returncode != 0:
-            print(f"  warning: could not fetch {rel}", file=sys.stderr)
-            continue
-        content = base64.b64decode(result.stdout.strip()).decode()
-        dest = project_dir / rel
-        dest.parent.mkdir(parents=True, exist_ok=True)
-        dest.write_text(content)
-        if rel.endswith((".sh", ".py")):
-            dest.chmod(0o755)
-        ok += 1
-    print(f"  {ok}/{len(_CLAUDE_FILES)} files copied")
-
 
 # ---------------------------------------------------------------------------
 # Subcommands
@@ -390,9 +350,6 @@ def cmd_new() -> None:
         path = project_dir / rel_path
         path.write_text(substitute(content, name))
         print(f"  wrote {rel_path}")
-
-    # Copy .claude/ Lean 4 tools from vibefeld
-    copy_claude_tools(project_dir)
 
     # Create GitHub remote before bd init so beads can find the upstream
     has_remote = False
