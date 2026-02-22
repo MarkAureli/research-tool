@@ -285,10 +285,11 @@ def build_apache_license(year: int, author: str) -> str:
 # Subcommands
 # ---------------------------------------------------------------------------
 
-def cmd_new() -> None:
+def cmd_new(name: str = "") -> None:
     print("=== research new: Lean 4 + Mathlib project ===\n")
 
-    name = prompt("Project name")
+    if not name:
+        name = prompt("Project name")
 
     reg = registry_load()
     if name in reg:
@@ -569,7 +570,7 @@ def main() -> None:
     cmd = args[0]
 
     if cmd == "new":
-        cmd_new()
+        cmd_new(args[1] if len(args) > 1 else "")
     elif cmd == "list":
         cmd_list()
     elif cmd == "cd":
