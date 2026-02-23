@@ -7,17 +7,18 @@ Inspired by [tobiasosborne/ProjSeminorm](https://github.com/tobiasosborne/ProjSe
 ## Usage
 
 ```
-research new                  scaffold a new project (interactive)
+research new [NAME]           scaffold a new project (interactive)
 research list                 list all managed projects (with full paths)
+research cd NAME              cd to a project directory
+research rename OLD NEW       rename a project (directory + GitHub repo)
 research delete NAME          delete a project (local directory + GitHub repo)
 research completion           print shell completion script
 research completion install   add completion to ~/.zshrc
 ```
 
 `research new` prompts for:
-- Project name (required, must be unique)
+- Project name (required, must be unique; can be passed as argument to skip prompt)
 - Parent directory (default: `~/Research`, created if absent)
-- Research question (default: placeholder)
 - GitHub visibility: private / public / local (default: private)
 
 Then creates the full project skeleton, makes an initial git commit, and
@@ -72,8 +73,7 @@ Each new project contains:
 | `AGENTS.md` | Agent instructions |
 | `.mcp.json` | Lean 4 LSP MCP server (`lean-lsp-mcp` via `uvx`) |
 | `.gitattributes` | `*.jsonl merge=union` for clean beads merges |
-| `.claude/docs/lean4/` | Lean 4 reference docs (axiom elimination, proof golfing, …) |
-| `.claude/tools/lean4/` | Lean 4 helper scripts (sorry analyser, mathlib search, …) |
+| `.beads/` | Beads task tracker (hooks, issues DB, config) |
 
 `af` (vibefeld) is available for adversarial proof trees but not initialised at scaffold time — it requires a specific conjecture. See `AGENTS.md` for usage.
 
