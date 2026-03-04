@@ -286,7 +286,29 @@ def build_apache_license(year: int, author: str) -> str:
 # Subcommands
 # ---------------------------------------------------------------------------
 
+_REQUIRED_TOOLS = {
+    "elan": "https://leanprover.github.io/lean4/doc/setup.html",
+    "lake": "https://leanprover.github.io/lean4/doc/setup.html",
+    "git":  "https://git-scm.com/downloads",
+}
+
+
+def _check_required_tools() -> None:
+    missing = [
+        (tool, url)
+        for tool, url in _REQUIRED_TOOLS.items()
+        if shutil.which(tool) is None
+    ]
+    if missing:
+        lines = ["Error: required tools not found:"]
+        for tool, url in missing:
+            lines.append(f"  {tool}  →  {url}")
+        print("\n".join(lines), file=sys.stderr)
+        sys.exit(1)
+
+
 def cmd_new(name: str = "") -> None:
+    _check_required_tools()
     print("=== research new: Lean 4 + Mathlib project ===\n")
 
     if not name:
