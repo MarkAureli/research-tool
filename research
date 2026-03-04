@@ -291,8 +291,9 @@ _REQUIRED_TOOLS = {
     "elan": "https://leanprover.github.io/lean4/doc/setup.html",
     "lake": "https://leanprover.github.io/lean4/doc/setup.html",
     "git":  "https://git-scm.com/downloads",
-    "bd":   "https://github.com/steveyegge/beads",
-    "uvx":  "https://docs.astral.sh/uv/getting-started/installation/",
+    "bd":     "https://github.com/steveyegge/beads",
+    "uvx":    "https://docs.astral.sh/uv/getting-started/installation/",
+    "claude": "https://claude.ai/download",
 }
 
 
@@ -587,9 +588,6 @@ def cmd_continue(name: str) -> None:
     if not project_dir.exists():
         print(f"Note: {project_dir} not found — removing stale registry entry.", file=sys.stderr)
         registry_remove(name)
-        sys.exit(1)
-    if shutil.which("claude") is None:
-        print("Error: 'claude' not found — install Claude Code.", file=sys.stderr)
         sys.exit(1)
     os.chdir(project_dir)
     os.execvp("claude", ["claude"])
