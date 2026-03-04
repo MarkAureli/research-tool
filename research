@@ -434,6 +434,10 @@ def cmd_new(name: str = "") -> None:
 
     print(f"\nDone!  Project created at:\n  {project_dir}\n")
 
+    import os
+    os.chdir(project_dir)
+    os.execvp("claude", ["claude"])
+
 
 def cmd_list() -> None:
     reg = registry_load()
