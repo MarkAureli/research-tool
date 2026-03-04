@@ -5,6 +5,7 @@ Usage:
   research new              scaffold a new project (interactive)
   research list             list all managed projects
   research cd NAME          cd to a project directory
+  research continue NAME    open Claude Code in a project directory
   research rename OLD NEW   rename a project (directory + GitHub repo)
   research delete NAME      delete a project (local + GitHub)
   research completion       print shell completion script
@@ -514,10 +515,10 @@ COMPLETION_SCRIPT = dedent("""\
 
     _research_complete() {
         local -a subcmds projects
-        subcmds=(new list delete cd rename completion)
+        subcmds=(new list delete cd rename continue completion)
         if [[ $CURRENT -eq 2 ]]; then
             compadd -a subcmds
-        elif [[ $CURRENT -eq 3 && ( $words[2] == delete || $words[2] == cd || $words[2] == rename ) ]]; then
+        elif [[ $CURRENT -eq 3 && ( $words[2] == delete || $words[2] == cd || $words[2] == rename || $words[2] == continue ) ]]; then
             projects=($(command research list 2>/dev/null | awk '{print $1}'))
             compadd -a projects
         fi
@@ -576,6 +577,24 @@ def cmd_rename(old_name: str, new_name: str) -> None:
     print(f"Note: Lean source files still reference '{old_name}' — update lakefile.toml and .lean files if needed.")
 
 
+def cmd_continue(name: str) -> None:
+    import os
+    reg = registry_load()
+    if name not in reg:
+        print(f"Error: no project named '{name}' in the registry.", file=sys.stderr)
+        sys.exit(1)
+    project_dir = Path(reg[name])
+    if not project_dir.exists():
+        print(f"Note: {project_dir} not found — removing stale registry entry.", file=sys.stderr)
+        registry_remove(name)
+        sys.exit(1)
+    if shutil.which("claude") is None:
+        print("Error: 'claude' not found — install Claude Code.", file=sys.stderr)
+        sys.exit(1)
+    os.chdir(project_dir)
+    os.execvp("claude", ["claude"])
+
+
 def cmd_cd(name: str) -> None:
     reg = registry_load()
     if name not in reg:
@@ -613,6 +632,7 @@ Usage:
   research new                  scaffold a new project (interactive)
   research list                 list all managed projects
   research cd NAME              cd to a project directory
+  research continue NAME        open Claude Code in a project directory
   research rename OLD NEW       rename a project (directory + GitHub repo)
   research delete NAME          delete a project (local + GitHub)
   research completion           print shell completion script
@@ -643,6 +663,11 @@ def main() -> None:
             print("Usage: research cd NAME", file=sys.stderr)
             sys.exit(1)
         cmd_cd(args[1])
+    elif cmd == "continue":
+        if len(args) < 2:
+            print("Usage: research continue NAME", file=sys.stderr)
+            sys.exit(1)
+        cmd_continue(args[1])
     elif cmd == "delete":
         if len(args) < 2:
             print("Usage: research delete NAME", file=sys.stderr)
