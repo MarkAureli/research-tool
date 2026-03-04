@@ -3,6 +3,7 @@
 
 Usage:
   research new              scaffold a new project (interactive)
+  research register URL     clone and register an existing remote project
   research list             list all managed projects
   research cd NAME          cd to a project directory
   research continue NAME    open Claude Code in a project directory
@@ -288,9 +289,9 @@ def build_apache_license(year: int, author: str) -> str:
 # ---------------------------------------------------------------------------
 
 _REQUIRED_TOOLS = {
-    "elan": "https://leanprover.github.io/lean4/doc/setup.html",
-    "lake": "https://leanprover.github.io/lean4/doc/setup.html",
-    "git":  "https://git-scm.com/downloads",
+    "elan":   "https://leanprover.github.io/lean4/doc/setup.html",
+    "lake":   "https://leanprover.github.io/lean4/doc/setup.html",
+    "git":    "https://git-scm.com/downloads",
     "bd":     "https://github.com/steveyegge/beads",
     "uvx":    "https://docs.astral.sh/uv/getting-started/installation/",
     "claude": "https://claude.ai/download",
@@ -529,7 +530,7 @@ COMPLETION_SCRIPT = dedent("""\
 
     _research_complete() {
         local -a subcmds projects
-        subcmds=(new list delete cd rename continue completion)
+        subcmds=(new register list delete cd rename continue completion)
         if [[ $CURRENT -eq 2 ]]; then
             compadd -a subcmds
         elif [[ $CURRENT -eq 3 && ( $words[2] == delete || $words[2] == cd || $words[2] == rename || $words[2] == continue ) ]]; then
@@ -606,6 +607,36 @@ def cmd_continue(name: str) -> None:
     os.execvp("claude", ["claude"])
 
 
+def cmd_register(url: str) -> None:
+    name = Path(url.rstrip("/")).stem.removesuffix(".git")
+
+    reg = registry_load()
+    if name in reg:
+        print(
+            f"Error: a project named '{name}' is already managed by this tool\n"
+            f"  (at {reg[name]})",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+    parent_str = prompt("Parent directory", default="~/Research")
+    parent = Path(parent_str).expanduser().resolve()
+    parent.mkdir(parents=True, exist_ok=True)
+    project_dir = parent / name
+
+    if project_dir.exists():
+        print(f"\nError: {project_dir} already exists.", file=sys.stderr)
+        sys.exit(1)
+
+    print(f"\nCloning {url} → {project_dir} …")
+    if not run(["git", "clone", url, str(project_dir)]):
+        print("Error: git clone failed.", file=sys.stderr)
+        sys.exit(1)
+
+    registry_add(name, project_dir)
+    print(f"\nRegistered '{name}' at {project_dir}\n")
+
+
 def cmd_cd(name: str) -> None:
     reg = registry_load()
     if name not in reg:
@@ -641,6 +672,7 @@ def cmd_completion(install: bool = False) -> None:
 USAGE = """\
 Usage:
   research new                  scaffold a new project (interactive)
+  research register URL         clone and register an existing remote project
   research list                 list all managed projects
   research cd NAME              cd to a project directory
   research continue NAME        open Claude Code in a project directory
@@ -662,6 +694,11 @@ def main() -> None:
 
     if cmd == "new":
         cmd_new(args[1] if len(args) > 1 else "")
+    elif cmd == "register":
+        if len(args) < 2:
+            print("Usage: research register URL", file=sys.stderr)
+            sys.exit(1)
+        cmd_register(args[1])
     elif cmd == "list":
         cmd_list()
     elif cmd == "rename":
