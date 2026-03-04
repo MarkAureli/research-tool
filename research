@@ -414,11 +414,6 @@ def cmd_new(name: str = "") -> None:
         print("\nNote: 'bd' not found — skipping beads init.")
         print("Install beads: curl -fsSL https://raw.githubusercontent.com/steveyegge/beads/main/scripts/install.sh | bash")
 
-    # af availability check (init requires a conjecture, so deferred to first use)
-    if shutil.which("af") is None:
-        print("\nNote: 'af' not found — install vibefeld for adversarial proof trees.")
-        print("  https://github.com/MarkAureli/vibefeld")
-
     # uvx is required at runtime by .mcp.json (lean-lsp-mcp server)
     if shutil.which("uvx") is None:
         print("\nNote: 'uvx' not found — required by .mcp.json to run lean-lsp-mcp.")
