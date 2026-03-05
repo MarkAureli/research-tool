@@ -147,18 +147,18 @@ CLAUDE_MD = dedent("""\
 """)
 
 
-MCP_JSON = dedent("""\
-    {
-      "mcpServers": {
-        "lean-lsp": {
-          "type": "stdio",
-          "command": "uvx",
-          "args": ["lean-lsp-mcp"],
-          "env": {}
+def build_mcp_json() -> str:
+    import os
+    return json.dumps({
+        "mcpServers": {
+            "lean-lsp": {
+                "type": "stdio",
+                "command": "uvx",
+                "args": ["lean-lsp-mcp"],
+                "env": {"PATH": os.environ.get("PATH", "")},
+            }
         }
-      }
-    }
-""")
+    }, indent=2) + "\n"
 
 
 # ---------------------------------------------------------------------------
@@ -317,7 +317,7 @@ def cmd_new(name: str = "") -> None:
     files: dict[str, str] = {
         "LICENSE": build_apache_license(today.year, author),
         "CLAUDE.md": CLAUDE_MD,
-        ".mcp.json": MCP_JSON,
+        ".mcp.json": build_mcp_json(),
     }
 
     for rel_path, content in files.items():
